@@ -29,7 +29,12 @@
       end
       local BaseCheck = self:IsLearned() and self:CooldownRemainsP( BypassRecovery, Offset or "Auto") == 0 and RangeOK
       if self == SpellAffli.SummonPet then
-          return BaseCheck and not (Pet:IsActive() or Player:BuffP(SpellAffli.GrimoireofSacrificeBuff))
+        return BaseCheck and not (Pet:IsActive() or Player:BuffP(SpellAffli.GrimoireofSacrificeBuff))
+      elseif self == SpellAffli.ShadowBolt then
+        return BaseCheck and (not Player:IsMoving() or Player:BuffP(SpellAffli.NightfallBuff))
+      elseif self == SpellAffli.DrainLife or self == SpellAffli.DrainSoul or self == SpellAffli.Haunt
+        or self == SpellAffli.VileTaint or self == SpellAffli.SeedofCorruption or self == SpellAffli.UnstableAffliction then
+          return BaseCheck and not Player:IsMoving()
       else
         return BaseCheck
       end
