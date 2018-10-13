@@ -50,13 +50,10 @@
   local BestUnit, BestUnitTTD;
   function Commons.MfDSniping (MarkedforDeath)
     if MarkedforDeath:IsCastable() then
-      -- Get Units up to 30y for MfD.
-      HL.GetEnemies(30);
-
       BestUnit, BestUnitTTD = nil, 60;
       local MOTTD = MouseOver:IsInRange(30) and MouseOver:TimeToDie() or 11111;
       local TTD;
-      for _, Unit in pairs(Cache.Enemies[30]) do
+      for _, Unit in pairs(Everyone.GetPlayerEnemies(30)) do
         TTD = Unit:TimeToDie();
         -- Note: Increased the SimC condition by 50% since we are slower.
         if not Unit:IsMfdBlacklisted() and TTD < Player:ComboPointsDeficit()*1.5 and TTD < BestUnitTTD then
@@ -145,7 +142,7 @@
   local PoisonedBleedsCount = 0;
   function Commons.PoisonedBleeds ()
     PoisonedBleedsCount = 0;
-    for _, Unit in pairs(Cache.Enemies[50]) do
+    for _, Unit in pairs(Everyone.GetPlayerEnemies(50)) do
       if Commons.Poisoned(Unit) then
         -- TODO: For loop for this ? Not sure it's worth considering we would have to make 2 times spell object (Assa is init after Commons)
         if Unit:Debuff(Spell.Rogue.Assassination.Garrote) then

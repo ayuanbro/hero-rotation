@@ -231,7 +231,7 @@ end
 -- # With multiple targets, this variable is checked to decide whether some CDs should be synced with Blade Flurry
 -- actions+=/variable,name=blade_flurry_sync,value=spell_targets.blade_flurry<2&raid_event.adds.in>20|buff.blade_flurry.up
 local function Blade_Flurry_Sync ()
-  return not HR.AoEON() or Cache.EnemiesCount[BladeFlurryRange] < 2 or Player:BuffP(S.BladeFlurry)
+  return not HR.AoEON() or Everyone.GetPlayerEnemiesCount(BladeFlurryRange, true) < 2 or Player:BuffP(S.BladeFlurry)
 end
 
 local function EnergyTimeToMaxRounded ()
@@ -302,7 +302,7 @@ local function CDs ()
     end
     if HR.CDsON() then
       -- actions.cds+=/blade_flurry,if=spell_targets.blade_flurry>=2&!buff.blade_flurry.up
-      if HR.AoEON() and S.BladeFlurry:IsCastable() and Cache.EnemiesCount[BladeFlurryRange] >= 2 and not Player:BuffP(S.BladeFlurry) then
+      if HR.AoEON() and S.BladeFlurry:IsCastable() and Everyone.GetPlayerEnemiesCount(BladeFlurryRange, true) >= 2 and not Player:BuffP(S.BladeFlurry) then
         if Settings.Outlaw.GCDasOffGCD.BladeFlurry then
           HR.CastSuggested(S.BladeFlurry);
         else
@@ -397,8 +397,6 @@ end
 local function APL ()
   -- Unit Update
   BladeFlurryRange = S.AcrobaticStrikes:IsAvailable() and 9 or 6;
-  HL.GetEnemies(BladeFlurryRange);
-  HL.GetEnemies("Melee");
 
   -- Defensives
   -- Crimson Vial

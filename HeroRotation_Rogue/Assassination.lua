@@ -158,7 +158,7 @@ local function SuggestCycleDoT(DoTSpell, DoTEvaluation, DoTMinTTD)
   -- Prefer melee cycle units
   local BestUnit, BestUnitTTD = nil, DoTMinTTD;
   local TargetGUID = Target:GUID();
-  for _, CycleUnit in pairs(Cache.Enemies["Melee"]) do
+  for _, CycleUnit in pairs(Everyone.GetPlayerEnemies("Melee")) do
     if CycleUnit:GUID() ~= TargetGUID and Everyone.UnitIsCycleValid(CycleUnit, BestUnitTTD, -CycleUnit:DebuffRemainsP(DoTSpell))
     and DoTEvaluation(CycleUnit) then
       BestUnit, BestUnitTTD = CycleUnit, CycleUnit:TimeToDie();
@@ -169,7 +169,7 @@ local function SuggestCycleDoT(DoTSpell, DoTEvaluation, DoTMinTTD)
   -- Check ranged units next, if the RangedMultiDoT option is enabled
   elseif Settings.Assassination.RangedMultiDoT then
     BestUnit, BestUnitTTD = nil, DoTMinTTD;
-    for _, CycleUnit in pairs(Cache.Enemies[10]) do
+    for _, CycleUnit in pairs(Everyone.GetPlayerEnemies(10, true)) do
       if CycleUnit:GUID() ~= TargetGUID and Everyone.UnitIsCycleValid(CycleUnit, BestUnitTTD, -CycleUnit:DebuffRemainsP(DoTSpell))
       and DoTEvaluation(CycleUnit) then
         BestUnit, BestUnitTTD = CycleUnit, CycleUnit:TimeToDie();
@@ -262,11 +262,11 @@ local function CDs ()
       end
       if S.Vanish:IsCastable() and not Player:IsTanking(Target) then
         -- actions.cds+=/vanish,if=talent.subterfuge.enabled&!dot.garrote.ticking&variable.single_target
-        if S.Subterfuge:IsAvailable() and not Target:DebuffP(S.Garrote) and Cache.EnemiesCount[10] < 2 then
+        if S.Subterfuge:IsAvailable() and not Target:DebuffP(S.Garrote) and Everyone.GetPlayerEnemiesCount(10, true) < 2 then
           if HR.Cast(S.Vanish, Settings.Commons.OffGCDasOffGCD.Vanish) then return "Cast Vanish (Subterfuge Garrote)"; end
         end
         -- actions.cds+=/vanish,if=talent.exsanguinate.enabled&(talent.nightstalker.enabled|talent.subterfuge.enabled&spell_targets.fan_of_knives<2)&combo_points>=cp_max_spend&cooldown.exsanguinate.remains<1&(!talent.subterfuge.enabled|!azerite.shrouded_suffocation.enabled|dot.garrote.pmultiplier<=1)
-        if S.Exsanguinate:IsAvailable() and (S.Nightstalker:IsAvailable() or S.Subterfuge:IsAvailable() and Cache.EnemiesCount[10] < 2)
+        if S.Exsanguinate:IsAvailable() and (S.Nightstalker:IsAvailable() or S.Subterfuge:IsAvailable() and Everyone.GetPlayerEnemiesCount(10, true) < 2)
           and ComboPoints >= Rogue.CPMaxSpend() and S.Exsanguinate:CooldownRemainsP() < 1
           and (not S.Subterfuge:IsAvailable() or not S.ShroudedSuffocation:AzeriteEnabled() or Target:PMultiplier(S.Garrote) <= 1) then
           if HR.Cast(S.Vanish, Settings.Commons.OffGCDasOffGCD.Vanish) then return "Cast Vanish (Exsanguinate)"; end
@@ -276,9 +276,9 @@ local function CDs ()
           if HR.Cast(S.Vanish, Settings.Commons.OffGCDasOffGCD.Vanish) then return "Cast Vanish (Nightstalker)"; end
         end
         -- actions.cds+=/vanish,if=talent.subterfuge.enabled&(!talent.exsanguinate.enabled|spell_targets.fan_of_knives>=2)&!stealthed.rogue&cooldown.garrote.up&dot.garrote.refreshable&(spell_targets.fan_of_knives<=3&combo_points.deficit>=1+spell_targets.fan_of_knives|spell_targets.fan_of_knives>=4&combo_points.deficit>=4)
-        if S.Subterfuge:IsAvailable() and (not S.Exsanguinate:IsAvailable() or Cache.EnemiesCount[10] >= 2) and not Player:IsStealthedP(true, false)
+        if S.Subterfuge:IsAvailable() and (not S.Exsanguinate:IsAvailable() or Everyone.GetPlayerEnemiesCount(10, true) >= 2) and not Player:IsStealthedP(true, false)
           and S.Garrote:CooldownUp() and Target:DebuffRefreshableP(S.Garrote, 5.4)
-          and ((Cache.EnemiesCount[10] <= 3 and ComboPointsDeficit >= 1+Cache.EnemiesCount[10]) or (Cache.EnemiesCount[10] >= 4 and ComboPointsDeficit >= 4)) then
+          and ((Everyone.GetPlayerEnemiesCount(10, true) <= 3 and ComboPointsDeficit >= 1 + Everyone.GetPlayerEnemiesCount(10, true)) or (Everyone.GetPlayerEnemiesCount(10, true) >= 4 and ComboPointsDeficit >= 4)) then
           if HR.Cast(S.Vanish, Settings.Commons.OffGCDasOffGCD.Vanish) then return "Cast Vanish (Subterfuge)"; end
         end
         -- actions.cds+=/vanish,if=talent.master_assassin.enabled&!stealthed.all&master_assassin_remains<=0&!dot.rupture.refreshable
@@ -304,7 +304,7 @@ end
 local function Stealthed ()
   -- actions.stealthed=rupture,if=combo_points>=4&(talent.nightstalker.enabled|talent.subterfuge.enabled&talent.exsanguinate.enabled&cooldown.exsanguinate.remains<=2&spell_targets.fan_of_knives<2|!ticking)&target.time_to_die-remains>6
   if S.Rupture:IsCastable("Melee") and ComboPoints >= 4
-    and (S.Nightstalker:IsAvailable() or (S.Subterfuge:IsAvailable() and S.Exsanguinate:IsAvailable() and S.Exsanguinate:CooldownRemainsP() <= 2 and Cache.EnemiesCount[10] < 2) or not Target:DebuffP(S.Rupture))
+    and (S.Nightstalker:IsAvailable() or (S.Subterfuge:IsAvailable() and S.Exsanguinate:IsAvailable() and S.Exsanguinate:CooldownRemainsP() <= 2 and Everyone.GetPlayerEnemiesCount(10, true) < 2) or not Target:DebuffP(S.Rupture))
     and (Target:FilteredTimeToDie(">", 6, -Target:DebuffRemainsP(S.Rupture)) or Target:TimeToDieIsNotValid()) then
     if HR.Cast(S.Rupture) then return "Cast Rupture (Exsanguinate)"; end
   end
@@ -373,7 +373,7 @@ local function Dot ()
   end
   -- actions.dot+=/garrote,cycle_targets=1,if=(!talent.subterfuge.enabled|!(cooldown.vanish.up&cooldown.vendetta.remains<=4))&combo_points.deficit>=1&refreshable&(pmultiplier<=1|remains<=tick_time&spell_targets.fan_of_knives>=3+azerite.shrouded_suffocation.enabled)&(!exsanguinated|remains<=tick_time*2&spell_targets.fan_of_knives>=3+azerite.shrouded_suffocation.enabled)&(target.time_to_die-remains>4&spell_targets.fan_of_knives<=1|target.time_to_die-remains>12)
   local function EmpoweredDotRefresh()
-    return Cache.EnemiesCount[10] >= 3 + num(S.ShroudedSuffocation:AzeriteEnabled())
+    return Everyone.GetPlayerEnemiesCount(10, true) >= 3 + num(S.ShroudedSuffocation:AzeriteEnabled())
   end
   if S.Garrote:IsCastable() and (not S.Subterfuge:IsAvailable() or not HR.CDsON() or not (S.Vanish:CooldownUp() and S.Vendetta:CooldownRemainsP() <= 4)) and ComboPointsDeficit >= 1 then
     local function Evaluate_Garrote_Target(TargetUnit)
@@ -382,7 +382,7 @@ local function Dot ()
         and (not HL.Exsanguinated(TargetUnit, "Garrote") or TargetUnit:DebuffRemainsP(S.Garrote) <= 1.5 and EmpoweredDotRefresh())
         and Rogue.CanDoTUnit(TargetUnit, GarroteDMGThreshold);
     end
-    local ttdval = Cache.EnemiesCount[10] <= 1 and 4 or 12;
+    local ttdval = Everyone.GetPlayerEnemiesCount(10, true) <= 1 and 4 or 12;
     if Target:IsInRange("Melee") and Evaluate_Garrote_Target(Target)
       and (Target:FilteredTimeToDie(">", ttdval, -Target:DebuffRemainsP(S.Garrote)) or Target:TimeToDieIsNotValid()) then
       -- actions.maintain+=/pool_resource,for_next=1
@@ -396,8 +396,8 @@ local function Dot ()
     end
   end
   -- actions.dot+=/crimson_tempest,if=spell_targets>=2&remains<2+(spell_targets>=5)&combo_points>=4
-  if HR.AoEON() and S.CrimsonTempest:IsCastable("Melee") and ComboPoints >= 4 and Cache.EnemiesCount[10] >= 2
-    and Target:DebuffRemainsP(S.CrimsonTempest) < 2 + num(Cache.EnemiesCount[10] >= 5) then
+  if HR.AoEON() and S.CrimsonTempest:IsCastable("Melee") and ComboPoints >= 4 and Everyone.GetPlayerEnemiesCount(10, true) >= 2
+    and Target:DebuffRemainsP(S.CrimsonTempest) < 2 + num(Everyone.GetPlayerEnemiesCount(10, true) >= 5) then
     if HR.Cast(S.CrimsonTempest) then return "Cast Crimson Tempest"; end
   end
   -- actions.dot+=/rupture,cycle_targets=1,if=combo_points>=4&refreshable&(pmultiplier<=1|remains<=tick_time&spell_targets.fan_of_knives>=3+azerite.shrouded_suffocation.enabled)&(!exsanguinated|remains<=tick_time*2&spell_targets.fan_of_knives>=3+azerite.shrouded_suffocation.enabled)&target.time_to_die-remains>4
@@ -422,7 +422,7 @@ end
 local function Direct ()
   -- actions.direct=envenom,if=combo_points>=4+talent.deeper_stratagem.enabled&(debuff.vendetta.up|debuff.toxic_blade.up|energy.deficit<=25+variable.energy_regen_combined|spell_targets.fan_of_knives>=2)&(!talent.exsanguinate.enabled|cooldown.exsanguinate.remains>2)
   if S.Envenom:IsCastable("Melee") and ComboPoints >= 4 + (S.DeeperStratagem:IsAvailable() and 1 or 0)
-    and (Target:DebuffP(S.Vendetta) or Target:DebuffP(S.ToxicBladeDebuff) or Player:EnergyDeficitPredicted() <= 25 + Energy_Regen_Combined or Cache.EnemiesCount[10] >= 2)
+    and (Target:DebuffP(S.Vendetta) or Target:DebuffP(S.ToxicBladeDebuff) or Player:EnergyDeficitPredicted() <= 25 + Energy_Regen_Combined or Everyone.GetPlayerEnemiesCount(10, true) >= 2)
     and (not S.Exsanguinate:IsAvailable() or S.Exsanguinate:CooldownRemainsP() > 2 or not HR.CDsON()) then
     if HR.Cast(S.Envenom) then return "Cast Envenom"; end
   end
@@ -431,7 +431,7 @@ local function Direct ()
   -------------------------------------------------------------------
   -- actions.direct+=/variable,name=use_filler,value=combo_points.deficit>1|energy.deficit<=25+variable.energy_regen_combined|spell_targets.fan_of_knives>=2
   -- This is used in all following fillers, so we just return false if not true and won't consider these.
-  if not (ComboPointsDeficit > 1 or Player:EnergyDeficitPredicted() <= 25 + Energy_Regen_Combined or Cache.EnemiesCount[10] >= 2) then
+  if not (ComboPointsDeficit > 1 or Player:EnergyDeficitPredicted() <= 25 + Energy_Regen_Combined or Everyone.GetPlayerEnemiesCount(10, true) >= 2) then
     return false;
   end
   -------------------------------------------------------------------
@@ -442,12 +442,12 @@ local function Direct ()
     if HR.Cast(S.PoisonedKnife) then return "Cast Poisoned Knife (Sharpened Blades)"; end
   end
   -- actions.direct+=/fan_of_knives,if=variable.use_filler&(buff.hidden_blades.stack>=19|spell_targets.fan_of_knives>=4+(azerite.double_dose.rank>2)+stealthed.rogue)
-  if HR.AoEON() and S.FanofKnives:IsCastable("Melee") and (Player:BuffStack(S.HiddenBladesBuff) >= 19 or Cache.EnemiesCount[10] >= 4 + num(Player:IsStealthedP(true, false)) + num(S.DoubleDose:AzeriteRank() > 2) or Player:BuffStack(S.TheDreadlordsDeceit) >= 29) then
+  if HR.AoEON() and S.FanofKnives:IsCastable("Melee") and (Player:BuffStack(S.HiddenBladesBuff) >= 19 or Everyone.GetPlayerEnemiesCount(10, true) >= 4 + num(Player:IsStealthedP(true, false)) + num(S.DoubleDose:AzeriteRank() > 2) or Player:BuffStack(S.TheDreadlordsDeceit) >= 29) then
     if HR.Cast(S.FanofKnives) then return "Cast Fan of Knives"; end
   end
   -- actions.direct+=/fan_of_knives,target_if=!dot.deadly_poison_dot.ticking,if=variable.use_filler&spell_targets.fan_of_knives>=3
-  if HR.AoEON() and S.FanofKnives:IsCastable("Melee") and Player:BuffP(S.DeadlyPoison) and Cache.EnemiesCount[10] >= 3 then
-    for _, CycleUnit in pairs(Cache.Enemies[10]) do
+  if HR.AoEON() and S.FanofKnives:IsCastable("Melee") and Player:BuffP(S.DeadlyPoison) and Everyone.GetPlayerEnemiesCount(10, true) >= 3 then
+    for _, CycleUnit in pairs(Everyone.GetPlayerEnemies(10, true)) do
       if not CycleUnit:DebuffP(S.DeadlyPoisonDebuff) then
         if HR.Cast(S.FanofKnives) then return "Cast Fan of Knives (DP Refresh)"; end
       end
@@ -458,8 +458,8 @@ local function Direct ()
     if HR.Cast(S.Blindside) then return "Cast Blindside"; end
   end
   -- actions.direct+=/mutilate,target_if=!dot.deadly_poison_dot.ticking,if=variable.use_filler&spell_targets.fan_of_knives=2
-  if S.Mutilate:IsCastable("Melee") and Cache.EnemiesCount[10] == 2 then
-    for _, CycleUnit in pairs(Cache.Enemies["Melee"]) do
+  if S.Mutilate:IsCastable("Melee") and Everyone.GetPlayerEnemiesCount(10, true) == 2 then
+    for _, CycleUnit in pairs(Everyone.GetPlayerEnemies("Melee")) do
       if CycleUnit:GUID() ~= TargetGUID and not CycleUnit:DebuffP(S.DeadlyPoisonDebuff) then
         HR.CastLeftNameplate(CycleUnit, S.Mutilate);
         break;
@@ -476,13 +476,6 @@ end
 local function APL ()
   -- Spell ID Changes check
   Stealth = S.Subterfuge:IsAvailable() and S.Stealth2 or S.Stealth; -- w/ or w/o Subterfuge Talent
-
-  -- Unit Update
-  HL.GetEnemies(50); -- Used for Rogue.PoisonedBleeds()
-  HL.GetEnemies(30); -- Used for Poisoned Knife Poison refresh
-  HL.GetEnemies(10, true); -- Fan of Knives
-  HL.GetEnemies("Melee"); -- Melee
-  Everyone.AoEToggleEnemiesUpdate();
 
   -- Compute Cache
   ComboPoints = Player:ComboPoints();
