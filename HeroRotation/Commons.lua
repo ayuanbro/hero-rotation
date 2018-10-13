@@ -10,6 +10,7 @@
   local Target = Unit.Target;
   local Spell = HL.Spell;
   local Item = HL.Item;
+  local Enemies = HL.Enemies;
   -- Lua
   local pairs = pairs;
   -- File Locals
@@ -25,20 +26,32 @@
     return Target:Exists() and Player:CanAttack(Target) and not Target:IsDeadOrGhost();
   end
 
-  -- Put EnemiesCount to 1 if we have AoEON or are targetting an AoE insensible unit
-  local AoEInsensibleUnit = {
-    --- Legion
-      ----- Dungeons (7.0 Patch) -----
-      --- Mythic+ Affixes
-        -- Fel Explosives (7.2 Patch)
-        [120651] = true
-  }
-  function Commons.AoEToggleEnemiesUpdate ()
-    if not HR.AoEON() or AoEInsensibleUnit[Target:NPCID()] then
-      for Key, Value in pairs(Cache.EnemiesCount) do
-        Cache.EnemiesCount[Key] = math.min(1, Cache.EnemiesCount[Key]);
-      end
+  do
+    local AoEInsensibleUnit = {
+      --- Legion
+        ----- Dungeons (7.0 Patch) -----
+        --- Mythic+ Affixes
+          -- Fel Explosives (7.2 Patch)
+          [120651] = true
+    }
+    local function AoEIsAllowed ()
+      return not HR.AoEON() or AoEInsensibleUnit[Target:NPCID()];
     end
+    function Commons.GetPlayerEnemiesCount (Distance, AoESpell)
+      if AoEIsAllowed() then return 1; end
+      return #HL.Enemies.Player(Distance, AoESpell)
+    end
+    function Commons.GetPetEnemiesCount (Distance)
+      if AoEIsAllowed() then return 1; end
+      return #HL.Enemies.Pet(Distance)
+    end
+  end
+
+  function Commons.GetPlayerEnemies (Distance, AoESpell)
+    return HL.Enemies.Player(Distance, AoESpell)
+  end
+  function Commons.GetPetEnemies (Distance)
+    return HL.Enemies.Pet(Distance)
   end
 
   -- Is the current unit valid during cycle ?
