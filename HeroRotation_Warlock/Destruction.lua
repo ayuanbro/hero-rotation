@@ -10,6 +10,7 @@
   local Target = Unit.Target;
   local Spell = HL.Spell;
   local Item = HL.Item;
+  local Pet = Unit.Pet;
   -- HeroRotation
   local HR = HeroRotation;
   -- Lua
@@ -57,6 +58,7 @@
     SummonInfernal 		= Spell(1122),
     SummonInfernalSuppremacy = Spell(157898),
     SummonImp 				= Spell(688),
+    SummonPet         = Spell(688),
     GrimoireImp 			= Spell(111859),
     Fear 			        = Spell(5782),
     
@@ -306,9 +308,9 @@
     end
     
     --Precombat
-    -- actions.precombat+=/summon_pet,if=!talent.grimoire_of_supremacy.enabled&(!talent.grimoire_of_sacrifice.enabled|buff.demonic_power.down)
-    if S.SummonImp:IsCastable() and (Warlock.PetReminder() and (not IsPetInvoked() or not S.CauterizeMaster:IsLearned()) or not IsPetInvoked()) and not S.GrimoireOfSupremacy:IsAvailable() and (not S.GrimoireOfSacrifice:IsAvailable() or Player:BuffRemainsP(S.DemonicPower) < 600) and FutureShard() >= 1 and not Player:IsCasting(S.SummonImp) then
-      if HR.Cast(S.SummonImp, Settings.Destruction.GCDasOffGCD.SummonImp) then return ""; end
+    -- actions.precombat+=/summon_pet
+    if S.SummonPet:IsCastableP() and not Pet:IsActive() then
+      if HR.Cast(S.SummonPet, Settings.Destruction.GCDasOffGCD.SummonPet) then return ""; end
     end
     
     -- actions.precombat+=/grimoire_of_sacrifice,if=talent.grimoire_of_sacrifice.enabled
