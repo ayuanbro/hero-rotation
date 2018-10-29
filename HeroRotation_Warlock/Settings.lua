@@ -50,6 +50,7 @@
         GrimoireOfSacrifice = true,
         DimensionalRift = true,
         SummonImp = true,
+        SummonPet = true,
         GrimoireImp = true,
       },
       -- {Display OffGCD as OffGCD, ForceReturn}
